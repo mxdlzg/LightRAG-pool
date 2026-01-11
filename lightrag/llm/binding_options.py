@@ -11,7 +11,7 @@ import json
 from dataclasses import asdict, dataclass, field
 from typing import Any, ClassVar, List, get_args, get_origin
 
-from lightrag.utils import get_env_value
+from lightrag.utils import get_env_value, logger
 from lightrag.constants import DEFAULT_TEMPERATURE
 
 
@@ -210,6 +210,14 @@ class BindingOptions:
         env_var_prefix = f"{cls._binding_name}_".upper()
         help = cls._help
 
+        # Debug: show computed prefixes for this binding
+        logger.debug(
+            "BindingOptions.args_env_name_type_value: binding=%s args_prefix=%s env_prefix=%s",
+            cls._binding_name,
+            args_prefix,
+            env_var_prefix,
+        )
+
         # Check if this is a dataclass and use dataclass fields
         if dataclasses.is_dataclass(cls):
             for field in dataclasses.fields(cls):
@@ -232,6 +240,13 @@ class BindingOptions:
                     "default": default_value,
                     "help": f"{cls._binding_name} -- " + help.get(field.name, ""),
                 }
+
+                # Debug: log constructed arg definition
+                logger.debug(
+                    "BindingOptions.args_env_name_type_value: added argdef for %s: %s",
+                    cls._binding_name,
+                    argdef,
+                )
 
                 yield argdef
         else:
@@ -259,6 +274,13 @@ class BindingOptions:
                     "default": class_vars[class_var],
                     "help": f"{cls._binding_name} -- " + help.get(class_var, ""),
                 }
+
+                # Debug: log constructed arg definition for non-dataclass
+                logger.debug(
+                    "BindingOptions.args_env_name_type_value: added argdef (fallback) for %s: %s",
+                    cls._binding_name,
+                    argdef,
+                )
 
                 yield argdef
 
