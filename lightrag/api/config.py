@@ -514,6 +514,8 @@ def initialize_config(args=None, force=False):
 
     _global_args = args if args is not None else parse_args()
     _initialized = True
+    if global_args:
+        global_args.__dict__.update(_global_args.__dict__)
     return _global_args
 
 
@@ -529,21 +531,26 @@ def get_config():
 
 
 class _GlobalArgsProxy:
-    """Proxy object that auto-initializes configuration on first access
+    """Proxy object that auto-initializes configuration on first access"""
 
-    This maintains backward compatibility with existing code while
-    allowing programmatic control over initialization timing.
-    """
-
-    def __getattr__(self, name):
+    def _ensure_synced(self):
+        """Helper to sync the proxy's __dict__ with the real storage"""
         if not _initialized:
             initialize_config()
+        # 核心修改：将真实配置的属性复制到代理对象自身
+        # 这样 vars(self) 就能读取到内容了
+        if _global_args:
+            self.__dict__.update(_global_args.__dict__)
+
+    def __getattr__(self, name):
+        self._ensure_synced()
         return getattr(_global_args, name)
 
     def __setattr__(self, name, value):
-        if not _initialized:
-            initialize_config()
+        self._ensure_synced()
+        # 双写：既更新背后对象，也更新自己，保持 vars() 有效
         setattr(_global_args, name, value)
+        super().__setattr__(name, value)
 
     def __repr__(self):
         if not _initialized:
