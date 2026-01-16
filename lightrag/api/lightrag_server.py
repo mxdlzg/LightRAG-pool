@@ -796,7 +796,7 @@ def create_app(args):
 
         # Step 3: Create optimized embedding function (calls underlying function directly)
         # Note: When model is None, each binding will use its own default model
-        async def optimized_embedding_function(texts, embedding_dim=None):
+        async def optimized_embedding_function(texts, max_token_size=None, embedding_dim=None):
             try:
                 if binding == "lollms":
                     from lightrag.llm.lollms import lollms_embed
@@ -926,6 +926,7 @@ def create_app(args):
                         "base_url": host,
                         "api_key": api_key,
                         "embedding_dim": embedding_dim,
+                        "max_token_size": final_max_token_size,
                     }
                     if model:
                         kwargs["model"] = model
